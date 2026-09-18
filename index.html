@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🍌 موز کده</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: Tahoma, sans-serif;
+    background: linear-gradient(135deg, #fff8e1, #ffe0b2);
+    margin: 0; padding: 20px; min-height: 100vh;
+  }
+  .container { max-width: 800px; margin: 0 auto; }
+  h1 { color: #ff9800; text-align: center; font-size: 32px; }
+  .subtitle { text-align: center; color: #666; margin-bottom: 25px; }
+  .item {
+    background: white; border-radius: 12px; padding: 15px;
+    margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    animation: fadeIn 0.3s;
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } }
+  .item img { max-width: 100%; border-radius: 8px; display: block; margin: 0 auto; }
+  .item audio, .item video { width: 100%; border-radius: 8px; }
+  .item .meta {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 10px; padding-top: 10px; border-top: 1px solid #eee;
+    font-size: 13px; color: #666;
+  }
+  .item .meta .name { font-weight: bold; color: #333; word-break: break-all; }
+  .download-btn {
+    background: #4caf50; color: white; padding: 8px 16px;
+    border-radius: 6px; text-decoration: none; font-size: 13px;
+    transition: background 0.2s;
+  }
+  .download-btn:hover { background: #388e3c; }
+  .file-icon { font-size: 60px; text-align: center; padding: 20px; }
+  .empty { text-align: center; padding: 60px 20px; color: #999; }
+  .empty .icon { font-size: 80px; }
+  .refresh-btn {
+    display: block; margin: 0 auto 20px; padding: 10px 20px;
+    background: #ff9800; color: white; border: none; border-radius: 6px;
+    cursor: pointer; font-size: 14px;
+  }
+  .badge {
+    display: inline-block; background: #fff3e0; color: #e65100;
+    padding: 3px 10px; border-radius: 12px; font-size: 11px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🍌 موز کده</h1>
+  <p class="subtitle">آخرین محتواها (حداکثر ۲۰ مورد)</p>
+  <button class="refresh-btn" onclick="loadFiles()">🔄 به‌روزرسانی</button>
+  <div id="content"><div class="empty"><div class="icon">⏳</div><p>در حال بارگذاری...</p></div></div>
+</div>
+
+<script>
+async function loadFiles() {
+  const container = document.getElementById('content');
+  try {
+    const res = await fetch('/api/files');
+    const files = await res.json();
+    
+    if (!files.length) {
+      container.innerHTML = '<div class="empty"><div class="icon">🍌</div><p>هنوز محتوایی آپلود نشده</p></div>';
+      return;
+    }
+    
+    container.innerHTML = files.map(f => {
+      let preview = '';
+      if (f.type === 'image') {
+        preview = `<img src="${f.url}" alt="${f.originalName}" loading="lazy">`;
+      } else if (f.type === 'audio') {
+        preview = `<audio controls src="${f.url}"></audio>`;
+      } else if (f.type === 'video') {
+        preview = `<video controls src="${f.url}"></video>`;
+      } else {
+        preview = `<div class="file-icon">📄</div>`;
+      }
+      
+      const size = (f.size / 1024).toFixed(1) + ' KB';
+      const date = new Date(f.uploadedAt).toLocaleDateString('fa-IR');
+      
+      return `
+        <div class="item">
+          ${preview}
+          <div class="meta">
+            <div>
+              <div class="name">${f.originalName}</div>
+              <span class="badge">${size} • ${date}</span>
+            </div>
+            <a href="${f.url}" download="${f.originalName}" class="download-btn">⬇️ دانلود</a>
+          </div>
+        </div>
+      `;
+    }).join('');
+  } catch (e) {
+    container.innerHTML = '<div class="empty"><div class="icon">❌</div><p>خطا در بارگذاری</p></div>';
+  }
+}
+
+loadFiles();
+setInterval(loadFiles, 30000);
+</script>
+</body>
+</html>
