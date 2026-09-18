@@ -5,77 +5,105 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>🍌 پنل ادمین موز کده</title>
 <style>
-  * { box-sizing: border-box; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0a0a0a;
+    --card: #141414;
+    --border: #262626;
+    --text: #e5e5e5;
+    --muted: #8a8a8a;
+    --accent: #fff;
+  }
   body {
-    font-family: Tahoma, sans-serif;
-    background: linear-gradient(135deg, #263238, #37474f);
-    margin: 0; padding: 20px; min-height: 100vh; color: #fff;
+    font-family: -apple-system, 'Segoe UI', Tahoma, sans-serif;
+    background: var(--bg); color: var(--text);
+    min-height: 100vh; padding: 20px 16px;
   }
   .container { max-width: 700px; margin: 0 auto; }
-  h1 { color: #ff9800; text-align: center; }
+
+  header { text-align: center; padding: 24px 0; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+  header h1 { font-size: 24px; font-weight: 600; letter-spacing: 2px; }
+  header p { color: var(--muted); font-size: 12px; margin-top: 6px; }
+
   .card {
-    background: rgba(255,255,255,0.08); border-radius: 12px;
-    padding: 20px; margin-bottom: 20px; backdrop-filter: blur(10px);
-    border: 1px solid rgba(255,255,255,0.1);
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 20px; margin-bottom: 16px;
   }
-  label { display: block; margin-bottom: 8px; font-weight: bold; color: #ffcc80; }
+  label { display: block; margin-bottom: 8px; font-size: 12px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+
   input[type="password"], input[type="file"] {
-    width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #555;
-    background: rgba(0,0,0,0.3); color: #fff; font-size: 14px;
+    width: 100%; padding: 11px 14px; border-radius: 8px;
+    border: 1px solid var(--border); background: #0f0f0f;
+    color: var(--text); font-size: 13px; font-family: inherit;
   }
   input[type="file"]::file-selector-button {
-    background: #ff9800; color: white; border: none;
-    padding: 8px 16px; border-radius: 6px; cursor: pointer;
-    margin-left: 10px; font-family: Tahoma;
+    background: var(--accent); color: #000; border: none;
+    padding: 6px 14px; border-radius: 6px; cursor: pointer;
+    margin-left: 10px; font-weight: 600; font-family: inherit;
   }
+
   button {
-    background: #ff9800; color: white; border: none;
-    padding: 12px 24px; border-radius: 8px; cursor: pointer;
-    font-size: 15px; width: 100%; margin-top: 12px;
-    font-family: Tahoma; transition: background 0.2s;
+    background: var(--accent); color: #000; border: none;
+    padding: 12px 20px; border-radius: 8px; cursor: pointer;
+    font-size: 14px; font-weight: 600; font-family: inherit;
+    width: 100%; margin-top: 12px; transition: opacity 0.15s;
   }
-  button:hover { background: #e68900; }
-  button:disabled { background: #555; cursor: not-allowed; }
-  button.danger { background: #dc3545; }
-  button.danger:hover { background: #b02a37; }
-  .message {
-    margin-top: 15px; padding: 12px; border-radius: 8px;
-    display: none; text-align: center;
+  button:hover { opacity: 0.85; }
+  button:disabled { opacity: 0.3; cursor: not-allowed; }
+  button.danger { background: transparent; color: #dc2626; border: 1px solid #dc2626; }
+  button.danger:hover { background: #dc2626; color: #fff; }
+
+  .recorder {
+    background: #0f0f0f; border: 1px dashed var(--border);
+    border-radius: 10px; padding: 24px; text-align: center; margin-top: 12px;
   }
-  .message.success { background: #2e7d32; display: block; }
-  .message.error { background: #c62828; display: block; }
-  .counter {
-    text-align: center; padding: 10px; background: rgba(255,152,0,0.2);
-    border-radius: 8px; margin-bottom: 15px; font-size: 14px;
+  .rec-btn {
+    width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--accent);
+    background: transparent; color: var(--accent); font-size: 32px;
+    cursor: pointer; margin: 0 auto; display: flex; align-items: center;
+    justify-content: center; transition: all 0.2s; padding: 0;
   }
+  .rec-btn:hover { background: rgba(255,255,255,0.1); transform: scale(1.05); }
+  .rec-btn.recording { background: #dc2626; border-color: #dc2626; animation: pulse 1s infinite; }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(220,38,38,0.7); }
+    50% { box-shadow: 0 0 0 15px rgba(220,38,38,0); }
+  }
+  .rec-status { margin-top: 14px; font-size: 13px; color: var(--muted); }
+  .rec-status.active { color: #dc2626; font-weight: 600; }
+  .rec-preview { margin-top: 14px; }
+
+  .msg {
+    margin-top: 14px; padding: 12px; border-radius: 8px;
+    font-size: 13px; display: none; text-align: center;
+  }
+  .msg.success { background: #052e16; color: #4ade80; border: 1px solid #166534; display: block; }
+  .msg.error { background: #450a0a; color: #f87171; border: 1px solid #991b1b; display: block; }
+
+  .counter { text-align: center; padding: 12px; background: #0f0f0f; border-radius: 8px; margin-bottom: 14px; font-size: 13px; color: var(--muted); border: 1px solid var(--border); }
+  .counter b { color: var(--accent); }
+
   .file-row {
     display: flex; justify-content: space-between; align-items: center;
-    padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1);
-    gap: 10px;
+    padding: 12px 0; border-bottom: 1px solid var(--border); gap: 10px;
   }
+  .file-row:last-child { border-bottom: none; }
   .file-row .info { flex: 1; min-width: 0; }
-  .file-row .info .fname {
-    font-size: 13px; word-break: break-all;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-  .file-row .info .fmeta { font-size: 11px; color: #aaa; margin-top: 4px; }
-  .file-row button {
-    width: auto; padding: 6px 12px; font-size: 12px; margin: 0;
-  }
-  .progress {
-    height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px;
-    margin-top: 10px; overflow: hidden; display: none;
-  }
+  .file-row .fname { font-size: 13px; word-break: break-all; margin-bottom: 3px; }
+  .file-row .fmeta { font-size: 11px; color: var(--muted); }
+  .file-row button { width: auto; padding: 6px 14px; font-size: 12px; margin: 0; }
+
+  .progress { height: 4px; background: var(--border); border-radius: 2px; margin-top: 12px; overflow: hidden; display: none; }
   .progress.active { display: block; }
-  .progress-bar {
-    height: 100%; background: #ff9800; width: 0%;
-    transition: width 0.3s;
-  }
+  .progress-bar { height: 100%; background: var(--accent); width: 0; transition: width 0.3s; }
 </style>
 </head>
 <body>
 <div class="container">
-  <h1>🍌 پنل ادمین موز کده</h1>
+  <header>
+    <h1>🍌 پنل ادمین</h1>
+    <p>موز کده — نسخه ادمین</p>
+  </header>
 
   <div class="card">
     <label>🔐 رمز ادمین</label>
@@ -83,159 +111,131 @@
   </div>
 
   <div class="card">
-    <label>📤 آپلود محتوای جدید</label>
+    <label>📤 آپلود فایل</label>
     <input type="file" id="fileInput">
     <div class="progress" id="progress"><div class="progress-bar" id="progressBar"></div></div>
-    <button id="uploadBtn" onclick="uploadFile()">آپلود به موز کده</button>
-    <div class="message" id="message"></div>
+    <button onclick="uploadFile()">آپلود به موز کده</button>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <label>🎤 ضبط ویس</label>
+    <div class="recorder">
+      <button class="rec-btn" id="recBtn" onclick="toggleRecord()">🎤</button>
+      <div class="rec-status" id="recStatus">برای شروع ضبط کلیک کن</div>
+      <div class="rec-preview" id="recPreview"></div>
+    </div>
+    <button id="uploadVoiceBtn" onclick="uploadVoice()" style="display:none;">⬆ آپلود ویس</button>
   </div>
 
   <div class="card">
     <div class="counter" id="counter">در حال بارگذاری...</div>
     <div id="fileList"></div>
-    <button class="danger" onclick="deleteAll()" style="margin-top:15px;">🗑️ حذف همه محتواها</button>
+    <button class="danger" onclick="deleteAll()" style="margin-top:16px;">🗑️ حذف همه محتواها</button>
+    <button class="danger" onclick="clearChat()" style="margin-top:8px;">🧹 پاک کردن چت</button>
   </div>
 </div>
 
 <script>
 const passwordInput = document.getElementById('password');
 const fileInput = document.getElementById('fileInput');
-const messageDiv = document.getElementById('message');
+const msgDiv = document.getElementById('msg');
 const progressDiv = document.getElementById('progress');
 const progressBar = document.getElementById('progressBar');
-const uploadBtn = document.getElementById('uploadBtn');
 
-// ذخیره رمز در حافظه مرورگر
 passwordInput.value = localStorage.getItem('mozPass') || '';
 passwordInput.addEventListener('change', () => {
   localStorage.setItem('mozPass', passwordInput.value);
   loadFiles();
 });
 
-function showMessage(text, isError) {
-  messageDiv.textContent = text;
-  messageDiv.className = 'message ' + (isError ? 'error' : 'success');
-  setTimeout(() => { messageDiv.className = 'message'; }, 4000);
+function showMsg(text, isError) {
+  msgDiv.textContent = text;
+  msgDiv.className = 'msg ' + (isError ? 'error' : 'success');
+  setTimeout(() => { msgDiv.className = 'msg'; }, 4000);
 }
 
 function uploadFile() {
   const password = passwordInput.value;
   const file = fileInput.files[0];
-  
-  if (!password) return showMessage('رمز ادمین را وارد کنید', true);
-  if (!file) return showMessage('یک فایل انتخاب کنید', true);
-  
+  if (!password) return showMsg('رمز ادمین را وارد کنید', true);
+  if (!file) return showMsg('یک فایل انتخاب کنید', true);
+  doUpload(file, file.name);
+}
+
+function doUpload(file, name) {
+  const password = passwordInput.value;
   const formData = new FormData();
-  formData.append('file', file);
-  
+  formData.append('file', file, name);
+
   const xhr = new XMLHttpRequest();
-  uploadBtn.disabled = true;
   progressDiv.classList.add('active');
   progressBar.style.width = '0%';
-  
+
   xhr.upload.onprogress = (e) => {
-    if (e.lengthComputable) {
-      const percent = (e.loaded / e.total) * 100;
-      progressBar.style.width = percent + '%';
-    }
+    if (e.lengthComputable) progressBar.style.width = (e.loaded / e.total * 100) + '%';
   };
-  
+
   xhr.onload = () => {
-    uploadBtn.disabled = false;
     progressDiv.classList.remove('active');
-    
     if (xhr.status === 200) {
-      showMessage('✅ فایل با موفقیت آپلود شد', false);
+      showMsg('✅ با موفقیت آپلود شد', false);
       fileInput.value = '';
+      document.getElementById('recPreview').innerHTML = '';
+      document.getElementById('uploadVoiceBtn').style.display = 'none';
       loadFiles();
     } else {
-      try {
-        const data = JSON.parse(xhr.responseText);
-        showMessage('❌ ' + (data.error || 'خطا'), true);
-      } catch (e) {
-        showMessage('❌ خطا در آپلود', true);
-      }
+      try { showMsg('❌ ' + JSON.parse(xhr.responseText).error, true); }
+      catch (e) { showMsg('❌ خطا در آپلود', true); }
     }
   };
-  
+
   xhr.onerror = () => {
-    uploadBtn.disabled = false;
     progressDiv.classList.remove('active');
-    showMessage('❌ خطا در ارتباط با سرور', true);
+    showMsg('❌ خطا در ارتباط', true);
   };
-  
+
   xhr.open('POST', '/api/upload');
   xhr.setRequestHeader('x-admin-password', password);
   xhr.send(formData);
 }
 
-async function loadFiles() {
-  const password = passwordInput.value;
-  const res = await fetch('/api/files');
-  const files = await res.json();
-  
-  const counter = document.getElementById('counter');
-  counter.textContent = `📊 ${files.length} از ۲۰ محتوا`;
-  
-  const list = document.getElementById('fileList');
-  if (!files.length) {
-    list.innerHTML = '<p style="text-align:center;color:#999;padding:20px;">فایلی موجود نیست</p>';
+// ============ ضبط ویس ============
+let mediaRecorder = null;
+let audioChunks = [];
+let recordedBlob = null;
+let isRecording = false;
+
+async function toggleRecord() {
+  if (isRecording) {
+    mediaRecorder.stop();
     return;
   }
-  
-  list.innerHTML = files.map(f => {
-    const size = (f.size / 1024).toFixed(1) + ' KB';
-    const date = new Date(f.uploadedAt).toLocaleDateString('fa-IR');
-    const icon = f.type === 'image' ? '🖼️' : f.type === 'audio' ? '🎵' : f.type === 'video' ? '🎬' : '📄';
-    return `
-      <div class="file-row">
-        <div class="info">
-          <div class="fname">${icon} ${f.originalName}</div>
-          <div class="fmeta">${size} • ${date}</div>
-        </div>
-        <button class="danger" onclick="deleteFile('${f.id}')">حذف</button>
-      </div>
-    `;
-  }).join('');
-}
 
-async function deleteFile(id) {
-  const password = passwordInput.value;
-  if (!password) return showMessage('رمز را وارد کنید', true);
-  if (!confirm('مطمئنی؟')) return;
-  
-  const res = await fetch('/api/files/' + id, {
-    method: 'DELETE',
-    headers: { 'x-admin-password': password }
-  });
-  
-  if (res.ok) {
-    showMessage('🗑️ حذف شد', false);
-    loadFiles();
-  } else {
-    showMessage('❌ خطا در حذف', true);
-  }
-}
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorder = new MediaRecorder(stream);
+    audioChunks = [];
 
-async function deleteAll() {
-  const password = passwordInput.value;
-  if (!password) return showMessage('رمز را وارد کنید', true);
-  if (!confirm('همه محتواها پاک شوند؟ این عمل برگشت‌پذیر نیست!')) return;
-  
-  const res = await fetch('/api/all', {
-    method: 'DELETE',
-    headers: { 'x-admin-password': password }
-  });
-  
-  if (res.ok) {
-    showMessage('🗑️ همه پاک شد', false);
-    loadFiles();
-  } else {
-    showMessage('❌ خطا', true);
-  }
-}
+    mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunks.push(e.data); };
 
-loadFiles();
-</script>
-</body>
-</html>
+    mediaRecorder.onstop = () => {
+      stream.getTracks().forEach(t => t.stop());
+      isRecording = false;
+      document.getElementById('recBtn').classList.remove('recording');
+      document.getElementById('recBtn').textContent = '🎤';
+      document.getElementById('recStatus').className = 'rec-status';
+      document.getElementById('recStatus').textContent = 'ضبط تمام شد. می‌توانی گوش کنی یا آپلود کنی.';
+
+      recordedBlob = new Blob(audioChunks, { type: 'audio/webm' });
+      const url = URL.createObjectURL(recordedBlob);
+      document.getElementById('recPreview').innerHTML = `<audio controls src="${url}" style="width:100%"></audio>`;
+      document.getElementById('uploadVoiceBtn').style.display = 'block';
+    };
+
+    mediaRecorder.start();
+    isRecording = true;
+    document.getElementById('recBtn').classList.add('recording');
+    document.getElementById('recBtn').textContent = '⏹';
+    document.getElementById('recStatus').className = 'rec-status active';
+    document.getElementById('recStatus').textContent = '🔴 در حال ضبط... برای توقف کلی
