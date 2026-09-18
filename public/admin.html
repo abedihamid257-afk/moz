@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🍌 پنل ادمین موز کده</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: Tahoma, sans-serif;
+    background: linear-gradient(135deg, #263238, #37474f);
+    margin: 0; padding: 20px; min-height: 100vh; color: #fff;
+  }
+  .container { max-width: 700px; margin: 0 auto; }
+  h1 { color: #ff9800; text-align: center; }
+  .card {
+    background: rgba(255,255,255,0.08); border-radius: 12px;
+    padding: 20px; margin-bottom: 20px; backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  label { display: block; margin-bottom: 8px; font-weight: bold; color: #ffcc80; }
+  input[type="password"], input[type="file"] {
+    width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #555;
+    background: rgba(0,0,0,0.3); color: #fff; font-size: 14px;
+  }
+  input[type="file"]::file-selector-button {
+    background: #ff9800; color: white; border: none;
+    padding: 8px 16px; border-radius: 6px; cursor: pointer;
+    margin-left: 10px; font-family: Tahoma;
+  }
+  button {
+    background: #ff9800; color: white; border: none;
+    padding: 12px 24px; border-radius: 8px; cursor: pointer;
+    font-size: 15px; width: 100%; margin-top: 12px;
+    font-family: Tahoma; transition: background 0.2s;
+  }
+  button:hover { background: #e68900; }
+  button:disabled { background: #555; cursor: not-allowed; }
+  button.danger { background: #dc3545; }
+  button.danger:hover { background: #b02a37; }
+  .message {
+    margin-top: 15px; padding: 12px; border-radius: 8px;
+    display: none; text-align: center;
+  }
+  .message.success { background: #2e7d32; display: block; }
+  .message.error { background: #c62828; display: block; }
+  .counter {
+    text-align: center; padding: 10px; background: rgba(255,152,0,0.2);
+    border-radius: 8px; margin-bottom: 15px; font-size: 14px;
+  }
+  .file-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1);
+    gap: 10px;
+  }
+  .file-row .info { flex: 1; min-width: 0; }
+  .file-row .info .fname {
+    font-size: 13px; word-break: break-all;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .file-row .info .fmeta { font-size: 11px; color: #aaa; margin-top: 4px; }
+  .file-row button {
+    width: auto; padding: 6px 12px; font-size: 12px; margin: 0;
+  }
+  .progress {
+    height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px;
+    margin-top: 10px; overflow: hidden; display: none;
+  }
+  .progress.active { display: block; }
+  .progress-bar {
+    height: 100%; background: #ff9800; width: 0%;
+    transition: width 0.3s;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🍌 پنل ادمین موز کده</h1>
+
+  <div class="card">
+    <label>🔐 رمز ادمین</label>
+    <input type="password" id="password" placeholder="رمز را وارد کنید" autocomplete="current-password">
+  </div>
+
+  <div class="card">
+    <label>📤 آپلود محتوای جدید</label>
+    <input type="file" id="fileInput">
+    <div class="progress" id="progress"><div class="progress-bar" id="progressBar"></div></div>
+    <button id="uploadBtn" onclick="uploadFile()">آپلود به موز کده</button>
+    <div class="message" id="message"></div>
+  </div>
+
+  <div class="card">
+    <div class="counter" id="counter">در حال بارگذاری...</div>
+    <div id="fileList"></div>
+    <button class="danger" onclick="deleteAll()" style="margin-top:15px;">🗑️ حذف همه محتواها</button>
+  </div>
+</div>
+
+<script>
+const passwordInput = document.getElementById('password');
+const fileInput = document.getElementById('fileInput');
+const messageDiv = document.getElementById('message');
+const progressDiv = document.getElementById('progress');
+const progressBar = document.getElementById('progressBar');
+const uploadBtn = document.getElementById('uploadBtn');
+
+// ذخیره رمز در حافظه مرورگر
+passwordInput.value = localStorage.getItem('mozPass') || '';
+passwordInput.addEventListener('change', () => {
+  localStorage.setItem('mozPass', passwordInput.value);
+  loadFiles();
+});
+
+function showMessage(text, isError) {
+  messageDiv.textContent = text;
+  messageDiv.className = 'message ' + (isError ? 'error' : 'success');
+  setTimeout(() => { messageDiv.className = 'message'; }, 4000);
+}
+
+function uploadFile() {
+  const password = passwordInput.value;
+  const file = fileInput.files[0];
+  
+  if (!password) return showMessage('رمز ادمین را وارد کنید', true);
+  if (!file) return showMessage('یک فایل انتخاب کنید', true);
+  
+  const formData = new FormData();
+  formData.append('file', file);
+  
+  const xhr = new XMLHttpRequest();
+  uploadBtn.disabled = true;
+  progressDiv.classList.add('active');
+  progressBar.style.width = '0%';
+  
+  xhr.upload.onprogress = (e) => {
+    if (e.lengthComputable) {
+      const percent = (e.loaded / e.total) * 100;
+      progressBar.style.width = percent + '%';
+    }
+  };
+  
+  xhr.onload = () => {
+    uploadBtn.disabled = false;
+    progressDiv.classList.remove('active');
+    
+    if (xhr.status === 200) {
+      showMessage('✅ فایل با موفقیت آپلود شد', false);
+      fileInput.value = '';
+      loadFiles();
+    } else {
+      try {
+        const data = JSON.parse(xhr.responseText);
+        showMessage('❌ ' + (data.error || 'خطا'), true);
+      } catch (e) {
+        showMessage('❌ خطا در آپلود', true);
+      }
+    }
+  };
+  
+  xhr.onerror = () => {
+    uploadBtn.disabled = false;
+    progressDiv.classList.remove('active');
+    showMessage('❌ خطا در ارتباط با سرور', true);
+  };
+  
+  xhr.open('POST', '/api/upload');
+  xhr.setRequestHeader('x-admin-password', password);
+  xhr.send(formData);
+}
+
+async function loadFiles() {
+  const password = passwordInput.value;
+  const res = await fetch('/api/files');
+  const files = await res.json();
+  
+  const counter = document.getElementById('counter');
+  counter.textContent = `📊 ${files.length} از ۲۰ محتوا`;
+  
+  const list = document.getElementById('fileList');
+  if (!files.length) {
+    list.innerHTML = '<p style="text-align:center;color:#999;padding:20px;">فایلی موجود نیست</p>';
+    return;
+  }
+  
+  list.innerHTML = files.map(f => {
+    const size = (f.size / 1024).toFixed(1) + ' KB';
+    const date = new Date(f.uploadedAt).toLocaleDateString('fa-IR');
+    const icon = f.type === 'image' ? '🖼️' : f.type === 'audio' ? '🎵' : f.type === 'video' ? '🎬' : '📄';
+    return `
+      <div class="file-row">
+        <div class="info">
+          <div class="fname">${icon} ${f.originalName}</div>
+          <div class="fmeta">${size} • ${date}</div>
+        </div>
+        <button class="danger" onclick="deleteFile('${f.id}')">حذف</button>
+      </div>
+    `;
+  }).join('');
+}
+
+async function deleteFile(id) {
+  const password = passwordInput.value;
+  if (!password) return showMessage('رمز را وارد کنید', true);
+  if (!confirm('مطمئنی؟')) return;
+  
+  const res = await fetch('/api/files/' + id, {
+    method: 'DELETE',
+    headers: { 'x-admin-password': password }
+  });
+  
+  if (res.ok) {
+    showMessage('🗑️ حذف شد', false);
+    loadFiles();
+  } else {
+    showMessage('❌ خطا در حذف', true);
+  }
+}
+
+async function deleteAll() {
+  const password = passwordInput.value;
+  if (!password) return showMessage('رمز را وارد کنید', true);
+  if (!confirm('همه محتواها پاک شوند؟ این عمل برگشت‌پذیر نیست!')) return;
+  
+  const res = await fetch('/api/all', {
+    method: 'DELETE',
+    headers: { 'x-admin-password': password }
+  });
+  
+  if (res.ok) {
+    showMessage('🗑️ همه پاک شد', false);
+    loadFiles();
+  } else {
+    showMessage('❌ خطا', true);
+  }
+}
+
+loadFiles();
+</script>
+</body>
+</html>
