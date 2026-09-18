@@ -7,7 +7,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '5879';
-const MAX_ITEMS = 20;
+const MAX_TOTAL_SIZE = 800 * 1024 * 1024; // ۸۰۰ مگ کل
+const MAX_FILE_SIZE = 500 * 1024 * 1024;  // ۵۰۰ مگ برای فایل تکی
 const MAX_MESSAGES = 50;
 const DATA_FILE = path.join(__dirname, 'data.json');
 const CHAT_FILE = path.join(__dirname, 'chat.json');
@@ -40,7 +41,12 @@ const storage = multer.diskStorage({
     cb(null, uniqueSuffix + path.extname(file.originalname));
   }
 });
-const upload = multer({ storage, limits: { fileSize: 20 * 1024 * 1024 } });
+
+// حداکثر حجم فایل تکی: ۵۰۰ مگ
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE }
+});
 
 function checkAdmin(req, res, next) {
   const password = req.headers['x-admin-password'] || req.query.password;
@@ -72,13 +78,14 @@ app.post('/api/upload', checkAdmin, upload.single('file'), (req, res) => {
   let data = loadJSON(DATA_FILE);
   data.unshift(newItem);
 
-  if (data.length > MAX_ITEMS) {
-    const removed = data.slice(MAX_ITEMS);
-    data = data.slice(0, MAX_ITEMS);
-    removed.forEach(item => {
-      const fp = path.join(UPLOAD_DIR, item.filename);
-      if (fs.existsSync(fp)) try { fs.unlinkSync(fp); } catch (e) {}
-    });
+  // حذف قدیمی‌ترین‌ها اگه از ۸۰۰ مگ کل رد شد
+  let totalSize = data.reduce((sum, item) => sum + (item.size || 0), 0);
+  while (totalSize > MAX_TOTAL_SIZE && data.length > 1) {
+    const oldest = data[data.length - 1];
+    const fp = path.join(UPLOAD_DIR, oldest.filename);
+    if (fs.existsSync(fp)) try { fs.unlinkSync(fp); } catch (e) {}
+    data.pop();
+    totalSize -= oldest.size || 0;
   }
 
   saveJSON(DATA_FILE, data);
@@ -137,6 +144,14 @@ app.post('/api/chat', (req, res) => {
 app.delete('/api/chat', checkAdmin, (req, res) => {
   saveJSON(CHAT_FILE, []);
   res.json({ message: 'چت پاک شد' });
+});
+
+// مدیریت خطای حجم فایل
+app.use((err, req, res, next) => {
+  if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
+    return res.status(413).json({ error: 'حجم فایل خیلی زیاده (حداکثر ۵۰۰ مگ)' });
+  }
+  res.status(500).json({ error: err.message });
 });
 
 app.listen(PORT, () => console.log(`🍌 موز کده روی پورت ${PORT}`));
