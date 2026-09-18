@@ -238,4 +238,85 @@ async function toggleRecord() {
     document.getElementById('recBtn').classList.add('recording');
     document.getElementById('recBtn').textContent = '⏹';
     document.getElementById('recStatus').className = 'rec-status active';
-    document.getElementById('recStatus').textContent = '🔴 در حال ضبط... برای توقف کلی
+    document.getElementById('recStatus').textContent = '🔴 در حال ضبط... برای توقف کلیک کن';
+    document.getElementById('recPreview').innerHTML = '';
+    document.getElementById('uploadVoiceBtn').style.display = 'none';
+  } catch (e) {
+    showMsg('❌ دسترسی به میکروفون داده نشد', true);
+  }
+}
+
+function uploadVoice() {
+  if (!recordedBlob) return;
+  const password = passwordInput.value;
+  if (!password) return showMsg('رمز ادمین را وارد کنید', true);
+  const name = 'voice-' + new Date().toISOString().slice(0,19).replace(/[:T]/g, '-') + '.webm';
+  const file = new File([recordedBlob], name, { type: 'audio/webm' });
+  doUpload(file, name);
+}
+
+// ============ لیست فایل‌ها ============
+async function loadFiles() {
+  const res = await fetch('/api/files');
+  const files = await res.json();
+  document.getElementById('counter').innerHTML = `📊 <b>${files.length}</b> از ۲۰ محتوا`;
+
+  const list = document.getElementById('fileList');
+  if (!files.length) {
+    list.innerHTML = '<p style="text-align:center;color:#666;padding:20px;font-size:13px;">فایلی موجود نیست</p>';
+    return;
+  }
+  list.innerHTML = files.map(f => {
+    const size = (f.size / 1024).toFixed(1) + ' KB';
+    const date = new Date(f.uploadedAt).toLocaleDateString('fa-IR');
+    const icon = f.type === 'image' ? '🖼' : f.type === 'audio' ? '🎵' : f.type === 'video' ? '🎬' : '📄';
+    return `<div class="file-row">
+      <div class="info">
+        <div class="fname">${icon} ${f.originalName}</div>
+        <div class="fmeta">${size} • ${date}</div>
+      </div>
+      <button class="danger" onclick="deleteFile('${f.id}')">حذف</button>
+    </div>`;
+  }).join('');
+}
+
+async function deleteFile(id) {
+  const password = passwordInput.value;
+  if (!password) return showMsg('رمز را وارد کنید', true);
+  if (!confirm('مطمئنی؟')) return;
+  const res = await fetch('/api/files/' + id, {
+    method: 'DELETE',
+    headers: { 'x-admin-password': password }
+  });
+  if (res.ok) { showMsg('🗑 حذف شد', false); loadFiles(); }
+  else showMsg('❌ خطا در حذف', true);
+}
+
+async function deleteAll() {
+  const password = passwordInput.value;
+  if (!password) return showMsg('رمز را وارد کنید', true);
+  if (!confirm('همه محتواها پاک شوند؟')) return;
+  const res = await fetch('/api/all', {
+    method: 'DELETE',
+    headers: { 'x-admin-password': password }
+  });
+  if (res.ok) { showMsg('🗑 همه پاک شد', false); loadFiles(); }
+  else showMsg('❌ خطا', true);
+}
+
+async function clearChat() {
+  const password = passwordInput.value;
+  if (!password) return showMsg('رمز را وارد کنید', true);
+  if (!confirm('کل چت پاک شود؟')) return;
+  const res = await fetch('/api/chat', {
+    method: 'DELETE',
+    headers: { 'x-admin-password': password }
+  });
+  if (res.ok) showMsg('🧹 چت پاک شد', false);
+  else showMsg('❌ خطا', true);
+}
+
+loadFiles();
+</script>
+</body>
+</html>
