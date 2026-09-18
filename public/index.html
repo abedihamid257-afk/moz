@@ -56,7 +56,7 @@
   }
   .tab {
     flex: 1; padding: 12px 8px; text-align: center; cursor: pointer;
-    border-radius: 9px; color: var(--muted); font-size: 13px;
+    border-radius: 9px; color: var(--muted); font-size: 14px;
     font-weight: 600; transition: all 0.3s ease; user-select: none;
   }
   .tab.active {
@@ -109,8 +109,15 @@
     border-radius: 14px; margin-bottom: 14px; overflow: hidden;
     animation: slideUp 0.5s ease both; backdrop-filter: blur(10px);
     transition: all 0.3s;
+    position: relative;
   }
-  .code-card:hover { border-color: rgba(250,204,21,0.4); }
+  .code-card::before {
+    content: ''; position: absolute; top: 0; right: 0;
+    width: 3px; height: 100%;
+    background: linear-gradient(180deg, var(--yellow), transparent);
+    opacity: 0.7;
+  }
+  .code-card:hover { border-color: rgba(250,204,21,0.5); transform: translateY(-3px); box-shadow: 0 12px 40px rgba(0,0,0,0.5); }
   .code-head {
     padding: 12px 16px; background: rgba(15,15,15,0.8);
     border-bottom: 1px solid var(--border);
@@ -134,12 +141,8 @@
     background: linear-gradient(135deg, var(--yellow), var(--yellow-soft));
     color: #000;
   }
-  .copy-btn.copied {
-    background: #22c55e; color: #fff; border-color: #22c55e;
-  }
-  .code-body {
-    max-height: 500px; overflow: auto; background: #0d0d0d;
-  }
+  .copy-btn.copied { background: #22c55e; color: #fff; border-color: #22c55e; }
+  .code-body { max-height: 500px; overflow: auto; background: #0d0d0d; }
   .code-body pre {
     margin: 0; padding: 16px; font-size: 13px;
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
@@ -151,12 +154,7 @@
   .code-body::-webkit-scrollbar-track { background: #0a0a0a; }
   .code-body::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 4px; }
   .code-body::-webkit-scrollbar-thumb:hover { background: var(--yellow-dark); }
-
-  .code-text {
-    padding: 16px; font-size: 14px;
-    white-space: pre-wrap; word-break: break-word;
-    line-height: 1.7;
-  }
+  .code-text { padding: 16px; font-size: 14px; white-space: pre-wrap; word-break: break-word; line-height: 1.7; }
 
   .empty { text-align: center; padding: 60px 20px; color: var(--muted); }
   .empty .icon { font-size: 64px; opacity: 0.3; margin-bottom: 14px; }
@@ -192,7 +190,7 @@
   @media (max-width: 480px) {
     .chat-form input.name { width: 100%; }
     header h1 { font-size: 26px; }
-    .tab { font-size: 11px; padding: 10px 4px; }
+    .tab { font-size: 13px; padding: 10px 4px; }
   }
 </style>
 </head>
@@ -210,16 +208,11 @@
 
   <div class="tabs">
     <div class="tab active" onclick="switchTab('content', this)">📦 محتواها</div>
-    <div class="tab" onclick="switchTab('texts', this)">📝 متن‌ها</div>
     <div class="tab" onclick="switchTab('chat', this)">💬 چت</div>
   </div>
 
   <div id="content-section">
     <div id="content"><div class="empty"><div class="icon">⏳</div><p>در حال بارگذاری...</p></div></div>
-  </div>
-
-  <div id="texts-section" style="display:none;">
-    <div id="texts"><div class="empty"><div class="icon">⏳</div><p>در حال بارگذاری...</p></div></div>
   </div>
 
   <div id="chat-section" style="display:none;">
@@ -314,88 +307,37 @@ function switchTab(name, el) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
   document.getElementById('content-section').style.display = name === 'content' ? 'block' : 'none';
-  document.getElementById('texts-section').style.display = name === 'texts' ? 'block' : 'none';
   document.getElementById('chat-section').style.display = name === 'chat' ? 'block' : 'none';
   if (name === 'chat') loadChat();
-  if (name === 'texts') loadTexts();
 }
 
-// ============ محتواها ============
-async function loadFiles() {
+// ============ محتواها (فایل + متن یجا) ============
+async function loadContent() {
   const c = document.getElementById('content');
   try {
-    const res = await fetch('/api/files');
-    const files = await res.json();
-    if (!files.length) {
-      c.innerHTML = '<div class="empty"><div class="icon">🍌</div><p>هنوز محتوایی آپلود نشده</p></div>';
+    const [filesRes, textsRes] = await Promise.all([
+      fetch('/api/files'),
+      fetch('/api/texts')
+    ]);
+    const files = await filesRes.json();
+    const texts = await textsRes.json();
+
+    // ادغام و مرتب‌سازی بر اساس تاریخ
+    const all = [
+      ...files.map(f => ({ ...f, _kind: 'file', _date: f.uploadedAt })),
+      ...texts.map(t => ({ ...t, _kind: 'text', _date: t.at }))
+    ].sort((a, b) => new Date(b._date) - new Date(a._date));
+
+    if (!all.length) {
+      c.innerHTML = '<div class="empty"><div class="icon">🍌</div><p>هنوز محتوایی ارسال نشده</p></div>';
       return;
     }
-    c.innerHTML = files.map(f => {
-      let preview = '';
-      if (f.type === 'image') preview = `<img src="${f.url}" alt="" loading="lazy" onclick="openLightbox('${f.url}')">`;
-      else if (f.type === 'audio') preview = `<audio controls src="${f.url}"></audio>`;
-      else if (f.type === 'video') preview = `<video controls src="${f.url}"></video>`;
-      else preview = `<div class="file-icon">📄</div>`;
-      const size = f.size < 1024*1024 ? (f.size/1024).toFixed(1)+' KB' : (f.size/1024/1024).toFixed(1)+' MB';
-      const date = new Date(f.uploadedAt).toLocaleDateString('fa-IR');
-      return `
-        <div class="item">
-          ${preview}
-          <div class="meta">
-            <div class="info">
-              <div class="name">${escapeHtml(f.originalName)}</div>
-              <span>${size} • ${date}</span>
-            </div>
-            <a href="${f.url}" download="${escapeHtml(f.originalName)}" class="btn-dl">⬇ دانلود</a>
-          </div>
-        </div>`;
-    }).join('');
-  } catch (e) {
-    c.innerHTML = '<div class="empty"><div class="icon">❌</div><p>خطا در بارگذاری</p></div>';
-  }
-}
 
-// ============ متن‌ها ============
-async function loadTexts() {
-  const c = document.getElementById('texts');
-  try {
-    const res = await fetch('/api/texts');
-    const texts = await res.json();
-    if (!texts.length) {
-      c.innerHTML = '<div class="empty"><div class="icon">📝</div><p>هنوز متن یا کدی ارسال نشده</p></div>';
-      return;
-    }
-    c.innerHTML = texts.map(t => {
-      const date = new Date(t.at).toLocaleDateString('fa-IR');
-      const size = t.size < 1024 ? t.size + ' B' : (t.size/1024).toFixed(1) + ' KB';
-      const isCode = t.lang && t.lang !== 'text';
-
-      if (isCode) {
-        return `
-          <div class="code-card">
-            <div class="code-head">
-              <div class="title-wrap">
-                <div class="title">${escapeHtml(t.title)}</div>
-                <span class="lang-badge">${escapeHtml(t.lang)} • ${size} • ${date}</span>
-              </div>
-              <button class="copy-btn" onclick="copyText('${t.id}', this)">📋 کپی</button>
-            </div>
-            <div class="code-body">
-              <pre><code class="language-${escapeHtml(t.lang)}" id="code-${t.id}">${escapeHtml(t.content)}</code></pre>
-            </div>
-          </div>`;
+    c.innerHTML = all.map(item => {
+      if (item._kind === 'file') {
+        return renderFile(item);
       } else {
-        return `
-          <div class="code-card">
-            <div class="code-head">
-              <div class="title-wrap">
-                <div class="title">${escapeHtml(t.title)}</div>
-                <span class="lang-badge">متن • ${size} • ${date}</span>
-              </div>
-              <button class="copy-btn" onclick="copyText('${t.id}', this)">📋 کپی</button>
-            </div>
-            <div class="code-text" id="code-${t.id}">${escapeHtml(t.content)}</div>
-          </div>`;
+        return renderText(item);
       }
     }).join('');
 
@@ -405,6 +347,63 @@ async function loadTexts() {
     });
   } catch (e) {
     c.innerHTML = '<div class="empty"><div class="icon">❌</div><p>خطا در بارگذاری</p></div>';
+  }
+}
+
+function renderFile(f) {
+  let preview = '';
+  if (f.type === 'image') preview = `<img src="${f.url}" alt="" loading="lazy" onclick="openLightbox('${f.url}')">`;
+  else if (f.type === 'audio') preview = `<audio controls src="${f.url}"></audio>`;
+  else if (f.type === 'video') preview = `<video controls src="${f.url}"></video>`;
+  else preview = `<div class="file-icon">📄</div>`;
+
+  const size = f.size < 1024*1024 ? (f.size/1024).toFixed(1)+' KB' : (f.size/1024/1024).toFixed(1)+' MB';
+  const date = new Date(f.uploadedAt).toLocaleDateString('fa-IR');
+
+  return `
+    <div class="item">
+      ${preview}
+      <div class="meta">
+        <div class="info">
+          <div class="name">${escapeHtml(f.originalName)}</div>
+          <span>${size} • ${date}</span>
+        </div>
+        <a href="${f.url}" download="${escapeHtml(f.originalName)}" class="btn-dl">⬇ دانلود</a>
+      </div>
+    </div>`;
+}
+
+function renderText(t) {
+  const date = new Date(t.at).toLocaleDateString('fa-IR');
+  const size = t.size < 1024 ? t.size + ' B' : (t.size/1024).toFixed(1) + ' KB';
+  const isCode = t.lang && t.lang !== 'text';
+
+  if (isCode) {
+    return `
+      <div class="code-card">
+        <div class="code-head">
+          <div class="title-wrap">
+            <div class="title">${escapeHtml(t.title)}</div>
+            <span class="lang-badge">${escapeHtml(t.lang)} • ${size} • ${date}</span>
+          </div>
+          <button class="copy-btn" onclick="copyText('${t.id}', this)">📋 کپی</button>
+        </div>
+        <div class="code-body">
+          <pre><code class="language-${escapeHtml(t.lang)}" id="code-${t.id}">${escapeHtml(t.content)}</code></pre>
+        </div>
+      </div>`;
+  } else {
+    return `
+      <div class="code-card">
+        <div class="code-head">
+          <div class="title-wrap">
+            <div class="title">${escapeHtml(t.title)}</div>
+            <span class="lang-badge">متن • ${size} • ${date}</span>
+          </div>
+          <button class="copy-btn" onclick="copyText('${t.id}', this)">📋 کپی</button>
+        </div>
+        <div class="code-text" id="code-${t.id}">${escapeHtml(t.content)}</div>
+      </div>`;
   }
 }
 
@@ -420,7 +419,6 @@ function copyText(id, btn) {
       btn.classList.remove('copied');
     }, 2000);
   }).catch(() => {
-    // fallback برای مرورگرهای قدیمی
     const ta = document.createElement('textarea');
     ta.value = text;
     document.body.appendChild(ta);
@@ -509,8 +507,8 @@ function showToast(text, isError) {
 }
 
 // ============ شروع ============
-loadFiles();
-setInterval(loadFiles, 30000);
+loadContent();
+setInterval(loadContent, 30000);
 setInterval(() => {
   if (document.getElementById('chat-section').style.display !== 'none') loadChat();
 }, 5000);
