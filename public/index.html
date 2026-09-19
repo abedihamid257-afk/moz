@@ -103,7 +103,6 @@
   }
   .btn-dl:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(250,204,21,0.5); }
 
-  /* کارت متن/کد */
   .code-card {
     background: rgba(21,21,21,0.85); border: 1px solid var(--border);
     border-radius: 14px; margin-bottom: 14px; overflow: hidden;
@@ -155,7 +154,6 @@
   .code-body::-webkit-scrollbar-thumb:hover { background: var(--yellow-dark); }
   .code-text { padding: 16px; font-size: 14px; white-space: pre-wrap; word-break: break-word; line-height: 1.7; }
 
-  /* آمار و لایک */
   .stats-row {
     display: flex; gap: 14px; font-size: 11px;
     color: var(--muted); flex-wrap: wrap;
@@ -369,12 +367,10 @@ async function likeItem(type, id, btn) {
       markLiked(type, id);
       btn.classList.add('liked');
       btn.innerHTML = '❤️ لایک';
-      // آپدیت شمارنده تو صفحه
       const card = btn.closest('.item, .code-card');
       const statsRow = card.querySelector('.stats-row');
       if (statsRow) {
         const spans = statsRow.querySelectorAll('span');
-        // span دوم (index 1) شمارنده لایکه
         if (spans[1]) spans[1].innerHTML = '❤️ ' + data.likes;
       }
       showToast('❤️ لایک شد!', false);
@@ -382,10 +378,38 @@ async function likeItem(type, id, btn) {
   } catch (e) {}
 }
 
+// ============ بازدید یکتا ============
+function hasViewed(type, id) {
+  const key = 'mozViews_' + type + '_' + id;
+  return localStorage.getItem(key) === '1';
+}
+
+function markViewed(type, id) {
+  const key = 'mozViews_' + type + '_' + id;
+  localStorage.setItem(key, '1');
+}
+
 async function countView(type, id) {
+  // اگه این مرورگر قبلاً دیده، بازدید اضافه نکن
+  if (hasViewed(type, id)) return;
+  
   try {
     const endpoint = type === 'file' ? 'files' : 'texts';
-    await fetch(`/api/${endpoint}/${id}/view`, { method: 'POST' });
+    const res = await fetch(`/api/${endpoint}/${id}/view`, { method: 'POST' });
+    if (res.ok) {
+      markViewed(type, id);
+      const data = await res.json();
+      // آپدیت شمارنده تو صفحه
+      const likeBtns = document.querySelectorAll(`.like-btn[onclick*="'${id}'"]`);
+      if (likeBtns.length) {
+        const card = likeBtns[0].closest('.item, .code-card');
+        const statsRow = card.querySelector('.stats-row');
+        if (statsRow) {
+          const spans = statsRow.querySelectorAll('span');
+          if (spans[0]) spans[0].innerHTML = '👁 ' + data.views;
+        }
+      }
+    }
   } catch (e) {}
 }
 
