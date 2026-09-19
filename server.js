@@ -35,24 +35,18 @@ function saveJSON(file, data) {
 function getTotalSize() {
   const files = loadJSON(DATA_FILE);
   const texts = loadJSON(TEXTS_FILE);
-  const filesSize = files.reduce((sum, f) => sum + (f.size || 0), 0);
-  const textsSize = texts.reduce((sum, t) => sum + (t.size || 0), 0);
-  return filesSize + textsSize;
+  return files.reduce((s, f) => s + (f.size || 0), 0) + texts.reduce((s, t) => s + (t.size || 0), 0);
 }
 
 function trimToLimit() {
   while (getTotalSize() > MAX_TOTAL_SIZE) {
     const files = loadJSON(DATA_FILE);
     const texts = loadJSON(TEXTS_FILE);
-
     const oldestFile = files[files.length - 1];
     const oldestText = texts[texts.length - 1];
-
     const fileTime = oldestFile ? new Date(oldestFile.uploadedAt).getTime() : Infinity;
     const textTime = oldestText ? new Date(oldestText.at).getTime() : Infinity;
-
     if (fileTime === Infinity && textTime === Infinity) break;
-
     if (fileTime <= textTime && oldestFile) {
       const fp = path.join(UPLOAD_DIR, oldestFile.filename);
       if (fs.existsSync(fp)) try { fs.unlinkSync(fp); } catch (e) {}
@@ -83,7 +77,7 @@ function checkAdmin(req, res, next) {
   res.status(401).json({ error: 'رمز اشتباه است' });
 }
 
-// آمار
+// ============ آمار ============
 app.get('/api/stats', (req, res) => {
   const total = getTotalSize();
   res.json({
@@ -93,7 +87,7 @@ app.get('/api/stats', (req, res) => {
   });
 });
 
-// فایل‌ها
+// ============ فایل‌ها ============
 app.get('/api/files', (req, res) => res.json(loadJSON(DATA_FILE)));
 
 app.post('/api/upload', checkAdmin, upload.single('file'), (req, res) => {
@@ -111,7 +105,9 @@ app.post('/api/upload', checkAdmin, upload.single('file'), (req, res) => {
     filename: req.file.filename,
     url: `/uploads/${req.file.filename}`,
     type, size: req.file.size,
-    uploadedAt: new Date().toISOString()
+    uploadedAt: new Date().toISOString(),
+    likes: 0,
+    views: 0
   };
 
   let data = loadJSON(DATA_FILE);
@@ -143,17 +139,36 @@ app.delete('/api/all', checkAdmin, (req, res) => {
   res.json({ message: 'همه پاک شد' });
 });
 
-// متن‌ها / کدها
+// ============ لایک و بازدید فایل ============
+app.post('/api/files/:id/like', (req, res) => {
+  const id = req.params.id;
+  let data = loadJSON(DATA_FILE);
+  const item = data.find(i => i.id === id);
+  if (!item) return res.status(404).json({ error: 'یافت نشد' });
+
+  item.likes = (item.likes || 0) + 1;
+  saveJSON(DATA_FILE, data);
+  res.json({ likes: item.likes });
+});
+
+app.post('/api/files/:id/view', (req, res) => {
+  const id = req.params.id;
+  let data = loadJSON(DATA_FILE);
+  const item = data.find(i => i.id === id);
+  if (!item) return res.status(404).json({ error: 'یافت نشد' });
+
+  item.views = (item.views || 0) + 1;
+  saveJSON(DATA_FILE, data);
+  res.json({ views: item.views });
+});
+
+// ============ متن‌ها / کدها ============
 app.get('/api/texts', (req, res) => res.json(loadJSON(TEXTS_FILE)));
 
 app.post('/api/texts', checkAdmin, (req, res) => {
   const { title, content, lang } = req.body || {};
-  if (!content || !content.trim()) {
-    return res.status(400).json({ error: 'متن خالیه' });
-  }
-  if (content.length > 50000) {
-    return res.status(400).json({ error: 'متن خیلی بلنده (حداکثر ۵۰ هزار کاراکتر)' });
-  }
+  if (!content || !content.trim()) return res.status(400).json({ error: 'متن خالیه' });
+  if (content.length > 50000) return res.status(400).json({ error: 'متن خیلی بلنده' });
 
   const newText = {
     id: Date.now().toString(),
@@ -161,7 +176,9 @@ app.post('/api/texts', checkAdmin, (req, res) => {
     content: content,
     lang: (lang || 'text').toLowerCase(),
     size: Buffer.byteLength(content, 'utf8'),
-    at: new Date().toISOString()
+    at: new Date().toISOString(),
+    likes: 0,
+    views: 0
   };
 
   let texts = loadJSON(TEXTS_FILE);
@@ -184,20 +201,43 @@ app.delete('/api/texts/all', checkAdmin, (req, res) => {
   res.json({ message: 'همه متن‌ها پاک شد' });
 });
 
-// چت
+// ============ لایک و بازدید متن ============
+app.post('/api/texts/:id/like', (req, res) => {
+  const id = req.params.id;
+  let texts = loadJSON(TEXTS_FILE);
+  const item = texts.find(t => t.id === id);
+  if (!item) return res.status(404).json({ error: 'یافت نشد' });
+
+  item.likes = (item.likes || 0) + 1;
+  saveJSON(TEXTS_FILE, texts);
+  res.json({ likes: item.likes });
+});
+
+app.post('/api/texts/:id/view', (req, res) => {
+  const id = req.params.id;
+  let texts = loadJSON(TEXTS_FILE);
+  const item = texts.find(t => t.id === id);
+  if (!item) return res.status(404).json({ error: 'یافت نشد' });
+
+  item.views = (item.views || 0) + 1;
+  saveJSON(TEXTS_FILE, texts);
+  res.json({ views: item.views });
+});
+
+// ============ چت ============
 app.get('/api/chat', (req, res) => res.json(loadJSON(CHAT_FILE)));
 
 app.post('/api/chat', (req, res) => {
   const { name, message } = req.body || {};
   if (!name || !message) return res.status(400).json({ error: 'نام و پیام لازمه' });
-  if (name.length > 30 || message.length > 300) {
-    return res.status(400).json({ error: 'طول نام یا پیام زیاد است' });
-  }
+  if (name.length > 30 || message.length > 300) return res.status(400).json({ error: 'طول زیاد' });
+
   const msg = {
     id: Date.now().toString() + Math.random().toString(36).slice(2, 6),
     name: name.trim(), message: message.trim(),
     at: new Date().toISOString()
   };
+
   let chat = loadJSON(CHAT_FILE);
   chat.push(msg);
   if (chat.length > MAX_MESSAGES) chat = chat.slice(-MAX_MESSAGES);
