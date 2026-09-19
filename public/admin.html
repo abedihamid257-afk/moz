@@ -22,15 +22,124 @@
   #particles { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
   .container { max-width: 720px; margin: 0 auto; position: relative; z-index: 1; }
 
+  /* ============ صفحه قفل ============ */
+  #lockScreen {
+    position: fixed; inset: 0; z-index: 500;
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+    background: var(--bg);
+  }
+  #lockScreen.hidden { display: none; }
+
+  .lock-box {
+    background: rgba(21,21,21,0.9);
+    border: 1px solid var(--border);
+    border-radius: 18px; padding: 40px 30px;
+    max-width: 400px; width: 100%;
+    text-align: center;
+    backdrop-filter: blur(15px);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 60px rgba(250,204,21,0.08);
+    animation: slideUp 0.5s ease;
+    position: relative; overflow: hidden;
+  }
+  .lock-box::before {
+    content: ''; position: absolute; top: 0; right: 0;
+    width: 4px; height: 100%;
+    background: linear-gradient(180deg, var(--yellow), transparent);
+    opacity: 0.6;
+  }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(30px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .lock-box .lock-icon {
+    font-size: 64px; display: block; margin-bottom: 16px;
+    animation: float 3s ease-in-out infinite;
+    filter: drop-shadow(0 0 25px rgba(250,204,21,0.5));
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0) rotate(-3deg); }
+    50% { transform: translateY(-8px) rotate(3deg); }
+  }
+  .lock-box h2 {
+    font-size: 22px; font-weight: 800; letter-spacing: 2px;
+    margin-bottom: 6px;
+    background: linear-gradient(135deg, var(--yellow), var(--yellow-soft));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .lock-box p {
+    color: var(--muted); font-size: 13px;
+    margin-bottom: 24px;
+  }
+  .lock-box input {
+    width: 100%; padding: 14px 16px; border-radius: 10px;
+    border: 1px solid var(--border); background: rgba(15,15,15,0.8);
+    color: var(--text); font-size: 15px; font-family: inherit;
+    text-align: center; letter-spacing: 4px;
+    transition: all 0.25s;
+  }
+  .lock-box input:focus {
+    outline: none; border-color: var(--yellow);
+    box-shadow: 0 0 0 4px rgba(250,204,21,0.15);
+  }
+  .lock-box input.error {
+    border-color: var(--danger);
+    box-shadow: 0 0 0 4px rgba(220,38,38,0.15);
+    animation: shake 0.4s;
+  }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    75% { transform: translateX(8px); }
+  }
+  .lock-box button {
+    background: linear-gradient(135deg, var(--yellow), var(--yellow-soft));
+    color: #000; border: none; padding: 14px 22px;
+    border-radius: 10px; cursor: pointer; font-size: 15px;
+    font-weight: 800; font-family: inherit; width: 100%;
+    margin-top: 16px; transition: all 0.25s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .lock-box button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(250,204,21,0.5);
+  }
+  .lock-box button:disabled { opacity: 0.6; cursor: wait; }
+  .lock-error {
+    margin-top: 14px; padding: 10px; border-radius: 8px;
+    font-size: 13px; font-weight: 600;
+    background: rgba(220,38,38,0.1);
+    color: #f87171;
+    border: 1px solid rgba(220,38,38,0.3);
+    display: none;
+    animation: slideUp 0.3s ease;
+  }
+  .lock-error.show { display: block; }
+
+  /* ============ پنل اصلی ============ */
+  #adminPanel { display: none; }
+  #adminPanel.show { display: block; }
+
   header { text-align: center; padding: 20px 0 28px; border-bottom: 1px solid var(--border); margin-bottom: 28px; }
   header .logo { font-size: 52px; display: inline-block; animation: float 3.5s ease-in-out infinite; filter: drop-shadow(0 0 20px rgba(250,204,21,0.4)); }
-  @keyframes float { 0%,100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(-8px) rotate(3deg); } }
   header h1 {
     font-size: 28px; font-weight: 800; letter-spacing: 3px; margin-top: 8px;
     background: linear-gradient(135deg, var(--yellow), var(--yellow-soft));
     -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
   }
   header p { color: var(--muted); font-size: 12px; margin-top: 6px; letter-spacing: 1px; }
+
+  .logout-btn {
+    position: fixed; top: 16px; left: 16px;
+    background: rgba(21,21,21,0.85); color: var(--danger);
+    border: 1px solid var(--danger); padding: 8px 16px;
+    border-radius: 10px; font-size: 12px; font-weight: 700;
+    cursor: pointer; transition: all 0.25s; z-index: 100;
+    backdrop-filter: blur(10px); font-family: inherit;
+  }
+  .logout-btn:hover { background: var(--danger); color: #fff; }
 
   .card {
     background: rgba(21,21,21,0.85); border: 1px solid var(--border);
@@ -45,12 +154,10 @@
     opacity: 0.6;
   }
   .card:hover { border-color: rgba(250,204,21,0.4); box-shadow: 0 8px 30px rgba(0,0,0,0.4), 0 0 30px rgba(250,204,21,0.08); }
-  @keyframes slideUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
   .card:nth-child(1) { animation-delay: 0.05s; }
   .card:nth-child(2) { animation-delay: 0.1s; }
   .card:nth-child(3) { animation-delay: 0.15s; }
   .card:nth-child(4) { animation-delay: 0.2s; }
-  .card:nth-child(5) { animation-delay: 0.25s; }
 
   label {
     display: block; margin-bottom: 10px;
@@ -79,7 +186,7 @@
     direction: ltr; text-align: left; line-height: 1.6;
   }
 
-  button {
+  button.action {
     background: linear-gradient(135deg, var(--yellow), var(--yellow-soft));
     color: #000; border: none; padding: 13px 22px; border-radius: 9px;
     cursor: pointer; font-size: 14px; font-weight: 700;
@@ -87,9 +194,9 @@
     transition: all 0.25s;
     display: flex; align-items: center; justify-content: center; gap: 6px;
   }
-  button:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(250,204,21,0.4); }
-  button:active { transform: translateY(0); }
-  button:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+  button.action:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(250,204,21,0.4); }
+  button.action:active { transform: translateY(0); }
+  button.action:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
   button.danger {
     background: transparent; color: var(--danger);
     border: 1px solid var(--danger);
@@ -152,7 +259,8 @@
   .file-row button {
     width: auto; padding: 6px 14px; font-size: 12px;
     margin: 0; background: transparent; color: var(--danger);
-    border: 1px solid var(--danger);
+    border: 1px solid var(--danger); border-radius: 6px; cursor: pointer;
+    font-family: inherit; font-weight: 600;
   }
   .file-row button:hover { background: var(--danger); color: #fff; }
 
@@ -180,6 +288,7 @@
     .rec-btn { width: 75px; height: 75px; font-size: 30px; }
     .stats { grid-template-columns: 1fr; }
     .row-2 { grid-template-columns: 1fr; }
+    .lock-box { padding: 30px 20px; }
   }
 </style>
 </head>
@@ -187,98 +296,110 @@
 
 <canvas id="particles"></canvas>
 
-<div class="container">
-  <header>
-    <div class="logo">🍌</div>
-    <h1>پنل ادمین</h1>
-    <p>MOZ KADE • ADMIN PANEL</p>
-  </header>
-
-  <div class="card">
-    <label>🔐 رمز ادمین</label>
-    <input type="password" id="password" placeholder="رمز را وارد کنید" autocomplete="current-password">
+<!-- ============ صفحه قفل ============ -->
+<div id="lockScreen">
+  <div class="lock-box">
+    <span class="lock-icon">🔐</span>
+    <h2>ورود ادمین</h2>
+    <p>برای دسترسی به پنل، رمز را وارد کن</p>
+    <input type="password" id="lockInput" placeholder="• • • •" maxlength="20" autocomplete="current-password" inputmode="numeric">
+    <button id="lockBtn" onclick="tryUnlock()">🔓 ورود</button>
+    <div class="lock-error" id="lockError">❌ رمز اشتباه است</div>
   </div>
+</div>
 
-  <div class="card">
-    <label>📤 آپلود فایل</label>
-    <input type="file" id="fileInput">
-    <div class="progress" id="progress"><div class="progress-bar" id="progressBar"></div></div>
-    <button onclick="uploadFile()">⬆ آپلود به موز کده</button>
-    <div class="msg" id="msg"></div>
-  </div>
+<!-- ============ پنل ادمین ============ -->
+<div id="adminPanel">
+  <button class="logout-btn" onclick="logout()">🚪 خروج</button>
 
-  <div class="card">
-    <label>🎤 ضبط ویس</label>
-    <div class="recorder" id="recorder">
-      <button class="rec-btn" id="recBtn" onclick="toggleRecord()">🎤</button>
-      <div class="rec-status" id="recStatus">برای شروع ضبط کلیک کن</div>
-      <div class="rec-preview" id="recPreview"></div>
+  <div class="container">
+    <header>
+      <div class="logo">🍌</div>
+      <h1>پنل ادمین</h1>
+      <p>MOZ KADE • ADMIN PANEL</p>
+    </header>
+
+    <div class="card">
+      <label>📤 آپلود فایل</label>
+      <input type="file" id="fileInput">
+      <div class="progress" id="progress"><div class="progress-bar" id="progressBar"></div></div>
+      <button class="action" onclick="uploadFile()">⬆ آپلود به موز کده</button>
+      <div class="msg" id="msg"></div>
     </div>
-    <button id="uploadVoiceBtn" onclick="uploadVoice()" style="display:none;">⬆ آپلود ویس</button>
-  </div>
 
-  <div class="card">
-    <label>📝 ارسال متن / کد</label>
-    <div class="row-2">
-      <input type="text" id="textTitle" placeholder="عنوان (مثلاً: کد پایتون سریع)" maxlength="100">
-      <select id="textLang">
-        <option value="text">📄 متن ساده</option>
-        <option value="python">🐍 Python</option>
-        <option value="javascript">⚡ JavaScript</option>
-        <option value="typescript">💙 TypeScript</option>
-        <option value="html">🌐 HTML</option>
-        <option value="css">🎨 CSS</option>
-        <option value="json">📦 JSON</option>
-        <option value="bash">💻 Bash</option>
-        <option value="sql">🗄️ SQL</option>
-        <option value="java">☕ Java</option>
-        <option value="cpp">⚙️ C++</option>
-        <option value="php">🐘 PHP</option>
-        <option value="go">🐹 Go</option>
-        <option value="rust">🦀 Rust</option>
-        <option value="yaml">📋 YAML</option>
-        <option value="markdown">📝 Markdown</option>
-      </select>
-    </div>
-    <textarea id="textContent" placeholder="متن یا کدت رو اینجا بنویس..."></textarea>
-    <button onclick="sendText()">📤 ارسال به موز کده</button>
-    <div class="msg" id="textMsg"></div>
-  </div>
-
-  <div class="card">
-    <label>📊 آمار و مدیریت</label>
-    <div class="stats">
-      <div class="stat">
-        <div class="val" id="statCount">0</div>
-        <div class="lbl">فایل</div>
+    <div class="card">
+      <label>🎤 ضبط ویس</label>
+      <div class="recorder" id="recorder">
+        <button class="rec-btn" id="recBtn" onclick="toggleRecord()">🎤</button>
+        <div class="rec-status" id="recStatus">برای شروع ضبط کلیک کن</div>
+        <div class="rec-preview" id="recPreview"></div>
       </div>
-      <div class="stat">
-        <div class="val" id="statTexts">0</div>
-        <div class="lbl">متن / کد</div>
-      </div>
-    </div>
-    <div class="stats">
-      <div class="stat">
-        <div class="val" id="statSize">0 MB</div>
-        <div class="lbl">حجم مصرفی از ۸۰۰ مگ</div>
-      </div>
-      <div class="stat">
-        <div class="val" id="statPercent">0%</div>
-        <div class="lbl">درصد مصرف</div>
-      </div>
+      <button class="action" id="uploadVoiceBtn" onclick="uploadVoice()" style="display:none;">⬆ آپلود ویس</button>
     </div>
 
-    <div class="tabs-sm" style="margin-top:16px;">
-      <div class="tab-sm active" onclick="switchList('files', this)">📦 فایل‌ها</div>
-      <div class="tab-sm" onclick="switchList('texts', this)">📝 متن‌ها</div>
+    <div class="card">
+      <label>📝 ارسال متن / کد</label>
+      <div class="row-2">
+        <input type="text" id="textTitle" placeholder="عنوان (مثلاً: کد پایتون سریع)" maxlength="100">
+        <select id="textLang">
+          <option value="text">📄 متن ساده</option>
+          <option value="python">🐍 Python</option>
+          <option value="javascript">⚡ JavaScript</option>
+          <option value="typescript">💙 TypeScript</option>
+          <option value="html">🌐 HTML</option>
+          <option value="css">🎨 CSS</option>
+          <option value="json">📦 JSON</option>
+          <option value="bash">💻 Bash</option>
+          <option value="sql">🗄️ SQL</option>
+          <option value="java">☕ Java</option>
+          <option value="cpp">⚙️ C++</option>
+          <option value="php">🐘 PHP</option>
+          <option value="go">🐹 Go</option>
+          <option value="rust">🦀 Rust</option>
+          <option value="yaml">📋 YAML</option>
+          <option value="markdown">📝 Markdown</option>
+        </select>
+      </div>
+      <textarea id="textContent" placeholder="متن یا کدت رو اینجا بنویس..."></textarea>
+      <button class="action" onclick="sendText()">📤 ارسال به موز کده</button>
+      <div class="msg" id="textMsg"></div>
     </div>
 
-    <div id="list-files"><div class="empty">در حال بارگذاری...</div></div>
-    <div id="list-texts" style="display:none;"><div class="empty">در حال بارگذاری...</div></div>
+    <div class="card">
+      <label>📊 آمار و مدیریت</label>
+      <div class="stats">
+        <div class="stat">
+          <div class="val" id="statCount">0</div>
+          <div class="lbl">فایل</div>
+        </div>
+        <div class="stat">
+          <div class="val" id="statTexts">0</div>
+          <div class="lbl">متن / کد</div>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat">
+          <div class="val" id="statSize">0 MB</div>
+          <div class="lbl">حجم مصرفی از ۸۰۰ مگ</div>
+        </div>
+        <div class="stat">
+          <div class="val" id="statPercent">0%</div>
+          <div class="lbl">درصد مصرف</div>
+        </div>
+      </div>
 
-    <button class="danger" onclick="deleteAllFiles()" style="margin-top:16px;">🗑️ حذف همه فایل‌ها</button>
-    <button class="danger" onclick="deleteAllTexts()" style="margin-top:8px;">🗑️ حذف همه متن‌ها</button>
-    <button class="danger" onclick="clearChat()" style="margin-top:8px;">🧹 پاک کردن چت</button>
+      <div class="tabs-sm" style="margin-top:16px;">
+        <div class="tab-sm active" onclick="switchList('files', this)">📦 فایل‌ها</div>
+        <div class="tab-sm" onclick="switchList('texts', this)">📝 متن‌ها</div>
+      </div>
+
+      <div id="list-files"><div class="empty">در حال بارگذاری...</div></div>
+      <div id="list-texts" style="display:none;"><div class="empty">در حال بارگذاری...</div></div>
+
+      <button class="action danger" onclick="deleteAllFiles()" style="margin-top:16px;">🗑️ حذف همه فایل‌ها</button>
+      <button class="action danger" onclick="deleteAllTexts()" style="margin-top:8px;">🗑️ حذف همه متن‌ها</button>
+      <button class="action danger" onclick="clearChat()" style="margin-top:8px;">🧹 پاک کردن چت</button>
+    </div>
   </div>
 </div>
 
@@ -330,19 +451,94 @@
   draw();
 })();
 
+// ============ قفل ============
+let adminPassword = sessionStorage.getItem('mozAdminPass') || '';
+
+const lockScreen = document.getElementById('lockScreen');
+const adminPanel = document.getElementById('adminPanel');
+const lockInput = document.getElementById('lockInput');
+const lockError = document.getElementById('lockError');
+const lockBtn = document.getElementById('lockBtn');
+
+// اگه قبلاً تو این تب رمز زده، مستقیم برو پنل
+if (adminPassword) {
+  showPanel();
+}
+
+async function tryUnlock() {
+  const pass = lockInput.value.trim();
+  if (!pass) {
+    showLockError('رمز را وارد کن');
+    return;
+  }
+
+  lockBtn.disabled = true;
+  lockBtn.textContent = '⏳ در حال بررسی...';
+
+  try {
+    // تست رمز با یه درخواست ساده
+    const res = await fetch('/api/stats', {
+      headers: { 'x-admin-password': pass }
+    });
+    // /api/stats نیاز به رمز نداره، پس از یه endpoint محافظت‌شده استفاده می‌کنیم
+    // به جای این، از یه endpoint محافظت‌شده تست می‌کنیم
+    const testRes = await fetch('/api/upload', {
+      method: 'POST',
+      headers: { 'x-admin-password': pass }
+    });
+    // اگه 401 داد یعنی رمز اشتباهه
+    // ولی /api/upload بدون فایل 400 می‌ده، پس 401 رو چک می‌کنیم
+    
+    if (testRes.status === 401) {
+      throw new Error('wrong');
+    }
+    
+    // رمز درسته
+    adminPassword = pass;
+    sessionStorage.setItem('mozAdminPass', pass);
+    showPanel();
+  } catch (e) {
+    showLockError('رمز اشتباه است');
+    lockInput.value = '';
+    lockInput.classList.add('error');
+    setTimeout(() => lockInput.classList.remove('error'), 500);
+  } finally {
+    lockBtn.disabled = false;
+    lockBtn.textContent = '🔓 ورود';
+  }
+}
+
+function showLockError(text) {
+  lockError.textContent = '❌ ' + text;
+  lockError.classList.add('show');
+  setTimeout(() => lockError.classList.remove('show'), 3000);
+}
+
+function showPanel() {
+  lockScreen.classList.add('hidden');
+  adminPanel.classList.add('show');
+  loadAll();
+  setInterval(loadAll, 15000);
+}
+
+function logout() {
+  if (!confirm('از پنل خارج می‌شی؟')) return;
+  sessionStorage.removeItem('mozAdminPass');
+  adminPassword = '';
+  location.reload();
+}
+
+// Enter برای ورود
+lockInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') tryUnlock();
+});
+
 // ============ متغیرها ============
-const passwordInput = document.getElementById('password');
 const fileInput = document.getElementById('fileInput');
 const msgDiv = document.getElementById('msg');
 const textMsgDiv = document.getElementById('textMsg');
 const progressDiv = document.getElementById('progress');
 const progressBar = document.getElementById('progressBar');
-
-passwordInput.value = localStorage.getItem('mozPass') || '';
-passwordInput.addEventListener('change', () => {
-  localStorage.setItem('mozPass', passwordInput.value);
-  loadAll();
-});
 
 function showMsg(el, text, isError) {
   el.textContent = text;
@@ -352,15 +548,12 @@ function showMsg(el, text, isError) {
 
 // ============ آپلود فایل ============
 function uploadFile() {
-  const password = passwordInput.value;
   const file = fileInput.files[0];
-  if (!password) return showMsg(msgDiv, 'رمز ادمین را وارد کنید', true);
-  if (!file) return showMsg(msgDiv, 'یک فایل انتخاب کنید', true);
+  if (!file) return showMsg(msgDiv, 'یک فایل انتخاب کن', true);
   doUpload(file, file.name);
 }
 
 function doUpload(file, name) {
-  const password = passwordInput.value;
   const formData = new FormData();
   formData.append('file', file, name);
 
@@ -392,7 +585,7 @@ function doUpload(file, name) {
   };
 
   xhr.open('POST', '/api/upload');
-  xhr.setRequestHeader('x-admin-password', password);
+  xhr.setRequestHeader('x-admin-password', adminPassword);
   xhr.send(formData);
 }
 
@@ -417,7 +610,7 @@ async function toggleRecord() {
       recordedBlob = new Blob(audioChunks, { type: 'audio/webm' });
       const url = URL.createObjectURL(recordedBlob);
       document.getElementById('recPreview').innerHTML = `<audio controls src="${url}"></audio>`;
-      document.getElementById('uploadVoiceBtn').style.display = 'block';
+      document.getElementById('uploadVoiceBtn').style.display = 'flex';
     };
     mediaRecorder.start();
     isRecording = true;
@@ -435,8 +628,6 @@ async function toggleRecord() {
 
 function uploadVoice() {
   if (!recordedBlob) return;
-  const password = passwordInput.value;
-  if (!password) return showMsg(msgDiv, 'رمز ادمین را وارد کنید', true);
   const name = 'voice-' + new Date().toISOString().slice(0,19).replace(/[:T]/g, '-') + '.webm';
   const file = new File([recordedBlob], name, { type: 'audio/webm' });
   doUpload(file, name);
@@ -444,12 +635,10 @@ function uploadVoice() {
 
 // ============ ارسال متن/کد ============
 async function sendText() {
-  const password = passwordInput.value;
   const title = document.getElementById('textTitle').value.trim();
   const content = document.getElementById('textContent').value;
   const lang = document.getElementById('textLang').value;
 
-  if (!password) return showMsg(textMsgDiv, 'رمز ادمین را وارد کنید', true);
   if (!content.trim()) return showMsg(textMsgDiv, 'متن خالیه', true);
 
   try {
@@ -457,7 +646,7 @@ async function sendText() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-admin-password': password
+        'x-admin-password': adminPassword
       },
       body: JSON.stringify({ title, content, lang })
     });
@@ -484,7 +673,6 @@ function switchList(name, el) {
 }
 
 async function loadAll() {
-  // آمار
   try {
     const res = await fetch('/api/stats');
     const stats = await res.json();
@@ -493,7 +681,6 @@ async function loadAll() {
     document.getElementById('statPercent').textContent = stats.percent + '%';
   } catch (e) {}
 
-  // فایل‌ها
   try {
     const res = await fetch('/api/files');
     const files = await res.json();
@@ -517,7 +704,6 @@ async function loadAll() {
     }
   } catch (e) {}
 
-  // متن‌ها
   try {
     const res = await fetch('/api/texts');
     const texts = await res.json();
@@ -549,64 +735,51 @@ function escapeHtml(s) {
 
 // ============ حذف ============
 async function deleteFile(id) {
-  const password = passwordInput.value;
-  if (!password) return showMsg(msgDiv, 'رمز را وارد کنید', true);
   if (!confirm('مطمئنی؟')) return;
   const res = await fetch('/api/files/' + id, {
     method: 'DELETE',
-    headers: { 'x-admin-password': password }
+    headers: { 'x-admin-password': adminPassword }
   });
   if (res.ok) { showMsg(msgDiv, '🗑 حذف شد', false); loadAll(); }
   else showMsg(msgDiv, '❌ خطا', true);
 }
 
 async function deleteText(id) {
-  const password = passwordInput.value;
-  if (!password) return showMsg(textMsgDiv, 'رمز را وارد کنید', true);
   if (!confirm('مطمئنی؟')) return;
   const res = await fetch('/api/texts/' + id, {
     method: 'DELETE',
-    headers: { 'x-admin-password': password }
+    headers: { 'x-admin-password': adminPassword }
   });
   if (res.ok) { showMsg(textMsgDiv, '🗑 حذف شد', false); loadAll(); }
   else showMsg(textMsgDiv, '❌ خطا', true);
 }
 
 async function deleteAllFiles() {
-  const password = passwordInput.value;
-  if (!password) return showMsg(msgDiv, 'رمز را وارد کنید', true);
   if (!confirm('همه فایل‌ها پاک شوند؟')) return;
   const res = await fetch('/api/all', {
     method: 'DELETE',
-    headers: { 'x-admin-password': password }
+    headers: { 'x-admin-password': adminPassword }
   });
   if (res.ok) { showMsg(msgDiv, '🗑 همه پاک شد', false); loadAll(); }
 }
 
 async function deleteAllTexts() {
-  const password = passwordInput.value;
-  if (!password) return showMsg(textMsgDiv, 'رمز را وارد کنید', true);
   if (!confirm('همه متن‌ها پاک شوند؟')) return;
   const res = await fetch('/api/texts/all', {
     method: 'DELETE',
-    headers: { 'x-admin-password': password }
+    headers: { 'x-admin-password': adminPassword }
   });
   if (res.ok) { showMsg(textMsgDiv, '🗑 همه پاک شد', false); loadAll(); }
 }
 
 async function clearChat() {
-  const password = passwordInput.value;
-  if (!password) return showMsg(msgDiv, 'رمز را وارد کنید', true);
   if (!confirm('کل چت پاک شود؟')) return;
   const res = await fetch('/api/chat', {
     method: 'DELETE',
-    headers: { 'x-admin-password': password }
+    headers: { 'x-admin-password': adminPassword }
   });
   if (res.ok) showMsg(msgDiv, '🧹 چت پاک شد', false);
 }
-
-loadAll();
-setInterval(loadAll, 15000);
 </script>
 </body>
 </html>
